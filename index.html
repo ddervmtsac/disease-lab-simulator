@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Disease Dynamics Lab</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="sim.js" defer></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <p class="eyebrow">INTERACTIVE BIOLOGY LAB</p>
+      <h1>Disease Dynamics Lab</h1>
+      <p>Explore how transmission, recovery, incubation, masking, and vaccination can change an outbreak.</p>
+      <p class="notice">Educational model only. Results are illustrative, not predictions for a real disease.</p>
+    </header>
+
+    <section class="panel controls" aria-labelledby="controls-heading">
+      <h2 id="controls-heading">Model settings</h2>
+      <div class="control-grid">
+        <label>Disease preset
+          <select id="preset">
+            <option value="flu">Seasonal-flu-like</option>
+            <option value="covid">COVID-like</option>
+            <option value="measles">Highly transmissible / measles-like</option>
+            <option value="noro">Norovirus-like</option>
+            <option value="custom">Custom settings</option>
+          </select>
+        </label>
+        <label>Model type
+          <select id="modelType">
+            <option value="SEIR">SEIR (includes exposed stage)</option>
+            <option value="SIR">SIR (no exposed stage)</option>
+          </select>
+        </label>
+        <label>Population <output id="populationOut">180</output>
+          <input id="population" type="range" min="40" max="500" step="10" value="180">
+        </label>
+        <label>Transmission rate (β) <output id="betaOut">0.28</output>
+          <input id="beta" type="range" min="0.05" max="0.8" step="0.01" value="0.28">
+        </label>
+        <label>Recovery rate (γ) <output id="gammaOut">0.10</output>
+          <input id="gamma" type="range" min="0.03" max="0.3" step="0.01" value="0.10">
+        </label>
+        <label>Incubation rate (σ) <output id="sigmaOut">0.20</output>
+          <input id="sigma" type="range" min="0.05" max="0.6" step="0.01" value="0.20">
+        </label>
+        <label>Vaccinated at start <output id="vaxOut">20%</output>
+          <input id="vaccination" type="range" min="0" max="95" step="5" value="20">
+        </label>
+        <label>Mask / contact reduction <output id="maskOut">20%</output>
+          <input id="mask" type="range" min="0" max="80" step="5" value="20">
+        </label>
+      </div>
+      <div class="actions">
+        <button id="startBtn" class="primary">Start</button>
+        <button id="pauseBtn">Pause</button>
+        <button id="resetBtn">Reset simulation</button>
+        <button id="csvBtn">Export data (CSV)</button>
+      </div>
+    </section>
+
+    <section class="stats" aria-label="Current simulation statistics">
+      <article class="stat"><span>Susceptible</span><strong id="susceptibleStat">—</strong></article>
+      <article class="stat"><span>Exposed</span><strong id="exposedStat">—</strong></article>
+      <article class="stat"><span>Infectious</span><strong id="infectiousStat">—</strong></article>
+      <article class="stat"><span>Recovered / immune</span><strong id="recoveredStat">—</strong></article>
+      <article class="stat"><span>Peak infectious</span><strong id="peakStat">—</strong></article>
+      <article class="stat"><span>Approx. R₀*</span><strong id="r0Stat">—</strong></article>
+    </section>
+
+    <section class="visual-grid">
+      <article class="panel">
+        <h2>Population snapshot</h2>
+        <p class="muted">Each dot represents one person. Colors show current model state.</p>
+        <canvas id="populationCanvas" width="700" height="360" aria-label="Animated population dots"></canvas>
+        <div class="legend">
+          <span><i class="dot susceptible"></i> Susceptible</span>
+          <span><i class="dot exposed"></i> Exposed</span>
+          <span><i class="dot infectious"></i> Infectious</span>
+          <span><i class="dot recovered"></i> Recovered / vaccinated</span>
+        </div>
+      </article>
+      <article class="panel">
+        <h2>Outbreak curve</h2>
+        <p class="muted">Counts by model time step.</p>
+        <canvas id="chartCanvas" width="700" height="360" aria-label="Outbreak line chart"></canvas>
+        <div class="legend">
+          <span><i class="line susceptible-line"></i> Susceptible</span>
+          <span><i class="line exposed-line"></i> Exposed</span>
+          <span><i class="line infectious-line"></i> Infectious</span>
+          <span><i class="line recovered-line"></i> Recovered / immune</span>
+        </div>
+      </article>
+    </section>
+    <footer>
+      <p>*Approximate R₀ = β / γ, adjusted for the selected contact reduction. This simplified model assumes homogeneous mixing and lasting immunity; real outbreaks are more complex.</p>
+    </footer>
+  </main>
+</body>
+</html>

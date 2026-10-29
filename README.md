@@ -23,3 +23,9 @@ Canvas may restrict iframe embeds depending on institution settings. If the ifra
 
 ## Model note
 This is a simplified classroom demonstration, not a validated epidemiological forecasting model. Preset names are illustrative comparisons, not calibrated disease forecasts.
+
+
+## Social-distancing controls
+- **Population density:** Low spreads agents across a larger area; high groups them into a smaller area.
+- **Population mixing:** Low, medium, and high adjust movement and contact frequency. Infection is based on proximity to infectious agents.
+- This is a simplified classroom model, not a validated epidemiological forecast.

@@ -21,6 +21,8 @@
       sigma: +$("sigma").value,
       vaccination: +$("vaccination").value / 100,
       mask: +$("mask").value / 100,
+      density: $("density").value,
+      mixing: $("mixing").value,
       modelType: $("modelType").value
     };
   }
@@ -55,8 +57,14 @@
     $("recoveredStat").textContent = c.R;
     $("peakStat").textContent = peak;
     const contactAdjustedBeta = config.beta * (1 - config.mask);
-    $("r0Stat").textContent = (contactAdjustedBeta / config.gamma).toFixed(2);
+    const mixingMultiplier = config.mixing === "high" ? 1 : config.mixing === "medium" ? .62 : .28;
+    $("r0Stat").textContent = (contactAdjustedBeta * mixingMultiplier / config.gamma).toFixed(2);
     drawChart();
+  }
+  function zone() {
+    const scale = config.density === "high" ? 0.42 : config.density === "medium" ? 0.70 : 0.98;
+    const width = (popCanvas.width - 24) * scale, height = (popCanvas.height - 24) * scale;
+    return { left: (popCanvas.width - width) / 2 + 8, right: (popCanvas.width + width) / 2 - 8, top: (popCanvas.height - height) / 2 + 8, bottom: (popCanvas.height + height) / 2 - 8 };
   }
   function reset() {
     pause();
@@ -67,12 +75,14 @@
     peak = 0;
     const n = config.population;
     const vaccinatedN = Math.round(n * config.vaccination);
+    const z = zone();
+    const speed = config.mixing === "high" ? 2.5 : config.mixing === "medium" ? 1.5 : 0.55;
     for (let i = 0; i < n; i++) {
       people.push({
-        x: 8 + Math.random() * (popCanvas.width - 16),
-        y: 8 + Math.random() * (popCanvas.height - 16),
-        vx: (Math.random() - .5) * 1.6,
-        vy: (Math.random() - .5) * 1.6,
+        x: z.left + Math.random() * (z.right - z.left),
+        y: z.top + Math.random() * (z.bottom - z.top),
+        vx: (Math.random() - .5) * speed,
+        vy: (Math.random() - .5) * speed,
         state: i < vaccinatedN ? "R" : "S",
         days: 0
       });
@@ -86,17 +96,29 @@
   function simulateStep() {
     config = readConfig();
     const infectious = people.filter(p => p.state === "I");
-    const infectionProbability = Math.min(.95, config.beta * (1 - config.mask) * infectious.length / Math.max(1, people.length) * 3.2);
+    const z = zone();
+    const radius = config.density === "high" ? 38 : config.density === "medium" ? 30 : 22;
+    const mix = config.mixing === "high" ? 1 : config.mixing === "medium" ? .62 : .28;
+    const contactRadius = radius * (config.mixing === "high" ? 1.15 : config.mixing === "low" ? .75 : 1);
+    const perContact = Math.min(.95, config.beta * (1 - config.mask) * .18);
+    const speed = config.mixing === "high" ? 2.5 : config.mixing === "medium" ? 1.5 : .55;
     people.forEach(p => {
       p.days += 1;
-      if (p.state === "S" && Math.random() < infectionProbability) p.state = config.modelType === "SEIR" ? "E" : "I";
-      else if (p.state === "E" && Math.random() < config.sigma) p.state = "I";
+      if (p.state === "S") {
+        let chance = 0;
+        for (const inf of infectious) {
+          const dx = p.x - inf.x, dy = p.y - inf.y;
+          if (dx * dx + dy * dy <= contactRadius * contactRadius) chance = 1 - (1 - chance) * (1 - perContact * mix);
+        }
+        if (Math.random() < chance) p.state = config.modelType === "SEIR" ? "E" : "I";
+      } else if (p.state === "E" && Math.random() < config.sigma) p.state = "I";
       else if (p.state === "I" && Math.random() < config.gamma) p.state = "R";
+      if (Math.random() < mix * .20) { p.vx = (Math.random() - .5) * speed; p.vy = (Math.random() - .5) * speed; }
       p.x += p.vx; p.y += p.vy;
-      if (p.x < 5 || p.x > popCanvas.width - 5) p.vx *= -1;
-      if (p.y < 5 || p.y > popCanvas.height - 5) p.vy *= -1;
-      p.x = Math.max(5, Math.min(popCanvas.width - 5, p.x));
-      p.y = Math.max(5, Math.min(popCanvas.height - 5, p.y));
+      if (p.x < z.left || p.x > z.right) p.vx *= -1;
+      if (p.y < z.top || p.y > z.bottom) p.vy *= -1;
+      p.x = Math.max(z.left, Math.min(z.right, p.x));
+      p.y = Math.max(z.top, Math.min(z.bottom, p.y));
     });
     step += 1;
     record();
@@ -105,6 +127,8 @@
   }
   function drawPopulation() {
     popCtx.clearRect(0, 0, popCanvas.width, popCanvas.height);
+    const z = zone();
+    popCtx.strokeStyle = "#dbe6ea"; popCtx.setLineDash([5, 5]); popCtx.strokeRect(z.left, z.top, z.right-z.left, z.bottom-z.top); popCtx.setLineDash([]);
     people.forEach(p => {
       popCtx.beginPath();
       popCtx.arc(p.x, p.y, 4.2, 0, Math.PI * 2);
@@ -156,6 +180,8 @@
   ["population", "beta", "gamma", "sigma", "vaccination", "mask"].forEach(id => $(id).addEventListener("input", updateOutputs));
   $("preset").addEventListener("change", applyPreset);
   $("modelType").addEventListener("change", reset);
+  $("density").addEventListener("change", reset);
+  $("mixing").addEventListener("change", reset);
   updateOutputs();
   reset();
 })();

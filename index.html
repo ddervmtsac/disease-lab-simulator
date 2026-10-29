@@ -52,6 +52,22 @@
         <label>Mask / contact reduction <output id="maskOut">20%</output>
           <input id="mask" type="range" min="0" max="80" step="5" value="20">
         </label>
+        <label>Population density
+          <select id="density">
+            <option value="low">Low — spread out</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High — crowded</option>
+          </select>
+          <small>Controls how tightly people are grouped.</small>
+        </label>
+        <label>Population mixing
+          <select id="mixing">
+            <option value="low">Low — limited movement</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High — frequent mixing</option>
+          </select>
+          <small>Controls movement and contact frequency.</small>
+        </label>
       </div>
       <div class="actions">
         <button id="startBtn" class="primary">Start</button>
@@ -95,7 +111,7 @@
       </article>
     </section>
     <footer>
-      <p>*Approximate R₀ = β / γ, adjusted for the selected contact reduction. This simplified model assumes homogeneous mixing and lasting immunity; real outbreaks are more complex.</p>
+      <p>*Approximate R₀ is a simplified teaching indicator adjusted for masking and mixing; it is not a calibrated epidemiological estimate. The model uses proximity-based contacts and assumes lasting immunity; real outbreaks are more complex.</p>
     </footer>
   </main>
 </body>

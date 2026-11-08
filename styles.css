@@ -20,7 +20,7 @@ button { border: 1px solid #b9c9d1; background: #fff; border-radius: 9px; paddin
 button:hover { background: #edf5f7; }
 button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid #7bc5dd; outline-offset: 2px; }
 button.primary { background: var(--accent); color: white; border-color: var(--accent); }
-.stats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; margin: 16px 0; }
+.stats { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 12px; margin: 16px 0; }
 .stat { background: #e5eff2; border-radius: 12px; padding: 14px; }
 .stat span { display: block; color: #536a77; font-size: .8rem; }
 .stat strong { display: block; font-size: 1.55rem; margin-top: 3px; }
@@ -29,9 +29,9 @@ canvas { display: block; width: 100%; height: auto; margin-top: 12px; border: 1p
 .muted, footer { color: var(--muted); font-size: .9rem; }
 .legend { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; font-size: .82rem; color: #52616a; }
 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; }
-.susceptible { background: #111827; } .exposed { background: #e69f00; } .infectious { background: #d62728; } .recovered { background: #00865a; }
+.susceptible { background: #111827; } .exposed { background: #e69f00; } .infectious { background: #d62728; } .recovered { background: #00865a; } .deceased { background: #6b7280; }
 .line { display: inline-block; width: 18px; height: 3px; margin-right: 5px; vertical-align: middle; }
-.susceptible-line { background: #111827; } .exposed-line { background: #e69f00; } .infectious-line { background: #d62728; } .recovered-line { background: #00865a; }
+.susceptible-line { background: #111827; } .exposed-line { background: #e69f00; } .infectious-line { background: #d62728; } .recovered-line { background: #00865a; } .deceased-line { background: #6b7280; }
 footer { padding: 18px 2px 0; }
 @media (max-width: 900px) { .control-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } .visual-grid { grid-template-columns: 1fr; } }
 @media (max-width: 520px) { .shell { width: min(100% - 20px, 1180px); padding-top: 16px; } .panel { padding: 14px; } .control-grid { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .stat strong { font-size: 1.3rem; } }

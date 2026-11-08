@@ -37,6 +37,10 @@
         <label>Vaccinated at start <output id="vaxOut">20%</output>
           <input id="vaccination" type="range" min="0" max="100" step="10" value="20">
         </label>
+        <label>Death rate among infectious people <output id="deathRateOut">2%</output>
+          <input id="deathRate" type="range" min="0" max="100" step="1" value="2">
+          <small>Chance that an infectious person dies rather than recovers.</small>
+        </label>
         <label>Population density
           <select id="density">
             <option value="low">Low — spread out</option>
@@ -67,6 +71,7 @@
       <article class="stat"><span>Exposed</span><strong id="exposedStat">—</strong></article>
       <article class="stat"><span>Infectious</span><strong id="infectiousStat">—</strong></article>
       <article class="stat"><span>Recovered</span><strong id="recoveredStat">—</strong></article>
+      <article class="stat"><span>Deaths (% of population)</span><strong id="deathsStat">—</strong></article>
       <article class="stat"><span>Peak infectious</span><strong id="peakStat">—</strong></article>
       <article class="stat"><span>Approx. R₀*</span><strong id="r0Stat">—</strong></article>
     </section>
@@ -81,6 +86,7 @@
           <span><i class="dot exposed"></i> Exposed</span>
           <span><i class="dot infectious"></i> Infectious</span>
           <span><i class="dot recovered"></i> Recovered</span>
+          <span><i class="dot deceased"></i> Deceased</span>
         </div>
       </article>
       <article class="panel">
@@ -92,6 +98,7 @@
           <span><i class="line exposed-line"></i> Exposed</span>
           <span><i class="line infectious-line"></i> Infectious</span>
           <span><i class="line recovered-line"></i> Recovered</span>
+          <span><i class="line deceased-line"></i> Deaths</span>
         </div>
       </article>
     </section>

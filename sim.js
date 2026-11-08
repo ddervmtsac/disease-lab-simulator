@@ -7,7 +7,7 @@
     noro: { beta: 0.52, gamma: 0.22, sigma: 0.45, vaccination: 0 },
     custom: null
   };
-  const colors = { S: "#111827", E: "#e69f00", I: "#d62728", R: "#00865a" };
+  const colors = { S: "#111827", E: "#e69f00", I: "#d62728", R: "#00865a", D: "#6b7280" };
   const popCanvas = $("populationCanvas"), popCtx = popCanvas.getContext("2d");
   const chartCanvas = $("chartCanvas"), chartCtx = chartCanvas.getContext("2d");
   let people = [], history = [], running = false, timer = null, step = 0, peak = 0;
@@ -18,6 +18,7 @@
       population: +$("population").value,
       beta: +$("beta").value,
       vaccination: +$("vaccination").value / 100,
+      deathRate: +$("deathRate").value / 100,
       density: $("density").value,
       mixing: $("mixing").value,
       // Fixed teaching-model parameters are preset-specific; these are no longer user controls.
@@ -26,10 +27,15 @@
     };
   }
   function updateOutputs() {
-    ["population", "beta", "vaccination"].forEach(id => {
-      const val = +$(id).value;
-      const display = id === "vaccination" ? `${val}%` : (id === "population" ? val : val.toFixed(2));
-      $(id + "Out").textContent = display;
+    const values = {
+      population: $("population").value,
+      beta: (+$("beta").value).toFixed(2),
+      vaccination: `${$("vaccination").value}%`,
+      deathRate: `${$("deathRate").value}%`
+    };
+    Object.entries(values).forEach(([id, value]) => {
+      const outputId = { vaccination: "vaxOut", deathRate: "deathRateOut" }[id] || `${id}Out`;
+      $(outputId).textContent = value;
     });
   }
   function applyPreset() {
@@ -42,7 +48,7 @@
     reset();
   }
   function counts() {
-    const c = { S: 0, E: 0, I: 0, R: 0 };
+    const c = { S: 0, E: 0, I: 0, R: 0, D: 0 };
     people.forEach(p => c[p.state]++);
     return c;
   }
@@ -54,6 +60,7 @@
     $("exposedStat").textContent = c.E;
     $("infectiousStat").textContent = c.I;
     $("recoveredStat").textContent = c.R;
+    $("deathsStat").textContent = `${c.D} (${(100 * c.D / Math.max(1, config.population)).toFixed(1)}%)`;
     $("peakStat").textContent = peak;
     const mixingMultiplier = config.mixing === "high" ? 1 : config.mixing === "medium" ? .62 : .28;
     $("r0Stat").textContent = (config.beta * mixingMultiplier / config.gamma).toFixed(2);
@@ -110,9 +117,13 @@
         }
         if (Math.random() < chance) p.state = "E";
       } else if (p.state === "E" && Math.random() < config.sigma) p.state = "I";
-      else if (p.state === "I" && Math.random() < config.gamma) p.state = "R";
-      if (Math.random() < mix * .20) { p.vx = (Math.random() - .5) * speed; p.vy = (Math.random() - .5) * speed; }
-      p.x += p.vx; p.y += p.vy;
+      else if (p.state === "I" && Math.random() < config.gamma) {
+        p.state = Math.random() < config.deathRate ? "D" : "R";
+      }
+      if (p.state !== "D") {
+        if (Math.random() < mix * .20) { p.vx = (Math.random() - .5) * speed; p.vy = (Math.random() - .5) * speed; }
+        p.x += p.vx; p.y += p.vy;
+      }
       if (p.x < z.left || p.x > z.right) p.vx *= -1;
       if (p.y < z.top || p.y > z.bottom) p.vy *= -1;
       p.x = Math.max(z.left, Math.min(z.right, p.x));
@@ -126,6 +137,14 @@
   function drawPopulation() {
     popCtx.clearRect(0, 0, popCanvas.width, popCanvas.height);
     const z = zone();
+    popCtx.save();
+    popCtx.fillStyle = "#334155";
+    popCtx.font = "14px system-ui";
+    popCtx.translate(18, popCanvas.height / 2);
+    popCtx.rotate(-Math.PI / 2);
+    popCtx.textAlign = "center";
+    popCtx.fillText("Vertical position (pixels)", 0, 0);
+    popCtx.restore();
     popCtx.strokeStyle = "#dbe6ea"; popCtx.setLineDash([5, 5]); popCtx.strokeRect(z.left, z.top, z.right-z.left, z.bottom-z.top); popCtx.setLineDash([]);
     people.forEach(p => {
       popCtx.beginPath();
@@ -137,19 +156,27 @@
   function drawChart() {
     const w = chartCanvas.width, h = chartCanvas.height;
     chartCtx.clearRect(0, 0, w, h);
-    const pad = { l: 42, r: 16, t: 18, b: 32 };
+    const pad = { l: 66, r: 18, t: 24, b: 42 };
     chartCtx.strokeStyle = "#e2e9ec"; chartCtx.lineWidth = 1;
     for (let i = 0; i <= 4; i++) {
       const y = pad.t + (h - pad.t - pad.b) * i / 4;
       chartCtx.beginPath(); chartCtx.moveTo(pad.l, y); chartCtx.lineTo(w - pad.r, y); chartCtx.stroke();
     }
-    chartCtx.fillStyle = "#607483"; chartCtx.font = "12px system-ui";
-    chartCtx.fillText("People", 8, 14); chartCtx.fillText("Time →", w - 58, h - 8);
+    chartCtx.fillStyle = "#334155"; chartCtx.font = "14px system-ui";
+    chartCtx.save();
+    chartCtx.translate(18, h / 2);
+    chartCtx.rotate(-Math.PI / 2);
+    chartCtx.textAlign = "center";
+    chartCtx.fillText("People (individuals)", 0, 0);
+    chartCtx.restore();
+    chartCtx.textAlign = "right";
+    chartCtx.fillText("Time (simulation steps) →", w - 18, h - 10);
+    chartCtx.textAlign = "left";
     if (history.length < 2) return;
     const maxY = Math.max(10, config.population);
     const xAt = i => pad.l + i / Math.max(1, history.length - 1) * (w - pad.l - pad.r);
     const yAt = val => h - pad.b - val / maxY * (h - pad.t - pad.b);
-    ["S", "E", "I", "R"].forEach(state => {
+    ["S", "E", "I", "R", "D"].forEach(state => {
       chartCtx.beginPath(); chartCtx.strokeStyle = colors[state]; chartCtx.lineWidth = 2.5;
       history.forEach((row, i) => i === 0 ? chartCtx.moveTo(xAt(i), yAt(row[state])) : chartCtx.lineTo(xAt(i), yAt(row[state])));
       chartCtx.stroke();
@@ -168,14 +195,14 @@
   $("pauseBtn").addEventListener("click", pause);
   $("resetBtn").addEventListener("click", reset);
   $("csvBtn").addEventListener("click", () => {
-    const header = "time,susceptible,exposed,infectious,recovered_or_immune";
-    const rows = history.map(r => [r.time, r.S, r.E, r.I, r.R].join(","));
+    const header = "time,susceptible,exposed,infectious,recovered,deaths";
+    const rows = history.map(r => [r.time, r.S, r.E, r.I, r.R, r.D].join(","));
     const blob = new Blob([[header, ...rows].join("\n")], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = "disease-dynamics-data.csv"; a.click();
     URL.revokeObjectURL(url);
   });
-  ["population", "beta", "vaccination"].forEach(id => $(id).addEventListener("input", updateOutputs));
+  ["population", "beta", "vaccination", "deathRate"].forEach(id => $(id).addEventListener("input", updateOutputs));
   $("preset").addEventListener("change", applyPreset);
   $("density").addEventListener("change", reset);
   $("mixing").addEventListener("change", reset);

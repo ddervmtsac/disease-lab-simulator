@@ -31,7 +31,7 @@
       population: $("population").value,
       beta: (+$("beta").value).toFixed(2),
       vaccination: `${$("vaccination").value}%`,
-      deathRate: `${$("deathRate").value}%`
+      deathRate: `${Number($("deathRate").value).toFixed(2)}%`
     };
     Object.entries(values).forEach(([id, value]) => {
       const outputId = { vaccination: "vaxOut", deathRate: "deathRateOut" }[id] || `${id}Out`;
@@ -137,18 +137,10 @@
   function drawPopulation() {
     popCtx.clearRect(0, 0, popCanvas.width, popCanvas.height);
     const z = zone();
-    popCtx.save();
-    popCtx.fillStyle = "#334155";
-    popCtx.font = "14px system-ui";
-    popCtx.translate(18, popCanvas.height / 2);
-    popCtx.rotate(-Math.PI / 2);
-    popCtx.textAlign = "center";
-    popCtx.fillText("Vertical position (pixels)", 0, 0);
-    popCtx.restore();
     popCtx.strokeStyle = "#dbe6ea"; popCtx.setLineDash([5, 5]); popCtx.strokeRect(z.left, z.top, z.right-z.left, z.bottom-z.top); popCtx.setLineDash([]);
     people.forEach(p => {
       popCtx.beginPath();
-      popCtx.arc(p.x, p.y, 4.2, 0, Math.PI * 2);
+      popCtx.arc(p.x, p.y, 5.5, 0, Math.PI * 2);
       popCtx.fillStyle = colors[p.state];
       popCtx.fill();
     });

@@ -35,3 +35,7 @@ canvas { display: block; width: 100%; height: auto; margin-top: 12px; border: 1p
 footer { padding: 18px 2px 0; }
 @media (max-width: 900px) { .control-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } .visual-grid { grid-template-columns: 1fr; } }
 @media (max-width: 520px) { .shell { width: min(100% - 20px, 1180px); padding-top: 16px; } .panel { padding: 14px; } .control-grid { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .stat strong { font-size: 1.3rem; } }
+
+/* Give the population dot visualization the full page width. */
+.visual-grid { grid-template-columns: minmax(0, 1fr); }
+#populationCanvas { width: 100%; height: auto; }

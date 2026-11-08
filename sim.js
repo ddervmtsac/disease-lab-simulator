@@ -1,13 +1,13 @@
 (() => {
   const $ = (id) => document.getElementById(id);
   const presets = {
-    flu: { beta: 0.28, gamma: 0.10, sigma: 0.20, vaccination: 20, mask: 20 },
-    covid: { beta: 0.42, gamma: 0.08, sigma: 0.25, vaccination: 35, mask: 20 },
-    measles: { beta: 0.72, gamma: 0.12, sigma: 0.35, vaccination: 85, mask: 10 },
-    noro: { beta: 0.52, gamma: 0.22, sigma: 0.45, vaccination: 0, mask: 10 },
+    flu: { beta: 0.28, gamma: 0.10, sigma: 0.20, vaccination: 20 },
+    covid: { beta: 0.42, gamma: 0.08, sigma: 0.25, vaccination: 40 },
+    measles: { beta: 0.72, gamma: 0.12, sigma: 0.35, vaccination: 90 },
+    noro: { beta: 0.52, gamma: 0.22, sigma: 0.45, vaccination: 0 },
     custom: null
   };
-  const colors = { S: "#7e9ca8", E: "#e8b44c", I: "#d95d59", R: "#3b9b7a" };
+  const colors = { S: "#111827", E: "#e69f00", I: "#d62728", R: "#00865a" };
   const popCanvas = $("populationCanvas"), popCtx = popCanvas.getContext("2d");
   const chartCanvas = $("chartCanvas"), chartCtx = chartCanvas.getContext("2d");
   let people = [], history = [], running = false, timer = null, step = 0, peak = 0;
@@ -17,19 +17,18 @@
     return {
       population: +$("population").value,
       beta: +$("beta").value,
-      gamma: +$("gamma").value,
-      sigma: +$("sigma").value,
       vaccination: +$("vaccination").value / 100,
-      mask: +$("mask").value / 100,
       density: $("density").value,
       mixing: $("mixing").value,
-      modelType: $("modelType").value
+      // Fixed teaching-model parameters are preset-specific; these are no longer user controls.
+      gamma: (presets[$("preset").value] || presets.flu).gamma,
+      sigma: (presets[$("preset").value] || presets.flu).sigma,
     };
   }
   function updateOutputs() {
-    ["population", "beta", "gamma", "sigma", "vaccination", "mask"].forEach(id => {
+    ["population", "beta", "vaccination"].forEach(id => {
       const val = +$(id).value;
-      const display = id === "vaccination" || id === "mask" ? `${val}%` : (id === "population" ? val : val.toFixed(2));
+      const display = id === "vaccination" ? `${val}%` : (id === "population" ? val : val.toFixed(2));
       $(id + "Out").textContent = display;
     });
   }
@@ -56,9 +55,8 @@
     $("infectiousStat").textContent = c.I;
     $("recoveredStat").textContent = c.R;
     $("peakStat").textContent = peak;
-    const contactAdjustedBeta = config.beta * (1 - config.mask);
     const mixingMultiplier = config.mixing === "high" ? 1 : config.mixing === "medium" ? .62 : .28;
-    $("r0Stat").textContent = (contactAdjustedBeta * mixingMultiplier / config.gamma).toFixed(2);
+    $("r0Stat").textContent = (config.beta * mixingMultiplier / config.gamma).toFixed(2);
     drawChart();
   }
   function zone() {
@@ -89,7 +87,7 @@
     }
     const susceptible = people.filter(p => p.state === "S");
     if (susceptible.length) susceptible[0].state = "I";
-    if (config.modelType === "SEIR" && susceptible.length > 1) susceptible[1].state = "E";
+    if (susceptible.length > 1) susceptible[1].state = "E";
     record();
     drawPopulation();
   }
@@ -100,7 +98,7 @@
     const radius = config.density === "high" ? 38 : config.density === "medium" ? 30 : 22;
     const mix = config.mixing === "high" ? 1 : config.mixing === "medium" ? .62 : .28;
     const contactRadius = radius * (config.mixing === "high" ? 1.15 : config.mixing === "low" ? .75 : 1);
-    const perContact = Math.min(.95, config.beta * (1 - config.mask) * .18);
+    const perContact = Math.min(.95, config.beta * .18);
     const speed = config.mixing === "high" ? 2.5 : config.mixing === "medium" ? 1.5 : .55;
     people.forEach(p => {
       p.days += 1;
@@ -110,7 +108,7 @@
           const dx = p.x - inf.x, dy = p.y - inf.y;
           if (dx * dx + dy * dy <= contactRadius * contactRadius) chance = 1 - (1 - chance) * (1 - perContact * mix);
         }
-        if (Math.random() < chance) p.state = config.modelType === "SEIR" ? "E" : "I";
+        if (Math.random() < chance) p.state = "E";
       } else if (p.state === "E" && Math.random() < config.sigma) p.state = "I";
       else if (p.state === "I" && Math.random() < config.gamma) p.state = "R";
       if (Math.random() < mix * .20) { p.vx = (Math.random() - .5) * speed; p.vy = (Math.random() - .5) * speed; }
@@ -177,9 +175,8 @@
     const a = document.createElement("a"); a.href = url; a.download = "disease-dynamics-data.csv"; a.click();
     URL.revokeObjectURL(url);
   });
-  ["population", "beta", "gamma", "sigma", "vaccination", "mask"].forEach(id => $(id).addEventListener("input", updateOutputs));
+  ["population", "beta", "vaccination"].forEach(id => $(id).addEventListener("input", updateOutputs));
   $("preset").addEventListener("change", applyPreset);
-  $("modelType").addEventListener("change", reset);
   $("density").addEventListener("change", reset);
   $("mixing").addEventListener("change", reset);
   updateOutputs();

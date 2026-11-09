@@ -58,8 +58,8 @@
     peak = Math.max(peak, c.I);
     $("susceptibleStat").textContent = c.S;
     $("exposedStat").textContent = c.E;
-    $("infectiousStat").textContent = c.I;
-    $("recoveredStat").textContent = c.R;
+    $("contagiousStat").textContent = c.I;
+    $("immuneStat").textContent = c.R;
     $("deathsStat").textContent = `${(100 * c.D / Math.max(1, config.population)).toFixed(1)}% (${c.D} people)`;
     $("peakStat").textContent = peak;
 
@@ -99,35 +99,61 @@
   }
   function simulateStep() {
     config = readConfig();
-    const infectious = people.filter(p => p.state === "I");
     const z = zone();
     const radius = config.density === "high" ? 38 : config.density === "medium" ? 30 : 22;
     const mix = config.mixing === "high" ? 1 : config.mixing === "medium" ? .62 : .28;
     const contactRadius = radius * (config.mixing === "high" ? 1.15 : config.mixing === "low" ? .75 : 1);
     const perContact = Math.min(.95, config.beta * .18);
     const speed = config.mixing === "high" ? 2.5 : config.mixing === "medium" ? 1.5 : .55;
-    people.forEach(p => {
-      p.days += 1;
-      if (p.state === "S") {
-        let chance = 0;
-        for (const inf of infectious) {
-          const dx = p.x - inf.x, dy = p.y - inf.y;
-          if (dx * dx + dy * dy <= contactRadius * contactRadius) chance = 1 - (1 - chance) * (1 - perContact * mix);
+    // Spatial buckets avoid comparing every susceptible person with every contagious person.
+    const cellSize = contactRadius;
+    const buckets = new Map();
+    const key = (x, y) => `${x},${y}`;
+    for (const person of people) {
+      if (person.state !== "I") continue;
+      const cx = Math.floor(person.x / cellSize), cy = Math.floor(person.y / cellSize);
+      const k = key(cx, cy);
+      if (!buckets.has(k)) buckets.set(k, []);
+      buckets.get(k).push(person);
+    }
+    const newExposures = new Set();
+    const r2 = contactRadius * contactRadius;
+    for (const person of people) {
+      if (person.state !== "S") continue;
+      const cx = Math.floor(person.x / cellSize), cy = Math.floor(person.y / cellSize);
+      let chance = 0;
+      for (let dx = -1; dx <= 1; dx++) {
+        for (let dy = -1; dy <= 1; dy++) {
+          for (const inf of (buckets.get(key(cx + dx, cy + dy)) || [])) {
+            const ddx = person.x - inf.x, ddy = person.y - inf.y;
+            if (ddx * ddx + ddy * ddy <= r2) {
+              chance = 1 - (1 - chance) * (1 - perContact * mix);
+            }
+          }
         }
-        if (Math.random() < chance) p.state = "E";
-      } else if (p.state === "E" && Math.random() < config.sigma) p.state = "I";
-      else if (p.state === "I" && Math.random() < config.gamma) {
-        p.state = Math.random() < config.deathRate ? "D" : "R";
       }
-      if (p.state !== "D") {
-        if (Math.random() < mix * .20) { p.vx = (Math.random() - .5) * speed; p.vy = (Math.random() - .5) * speed; }
-        p.x += p.vx; p.y += p.vy;
+      if (Math.random() < chance) newExposures.add(person);
+    }
+    for (const person of people) {
+      person.days += 1;
+      if (person.state === "E" && Math.random() < config.sigma) person.state = "I";
+      else if (person.state === "I" && Math.random() < config.gamma) {
+        person.state = Math.random() < config.deathRate ? "D" : "R";
       }
-      if (p.x < z.left || p.x > z.right) p.vx *= -1;
-      if (p.y < z.top || p.y > z.bottom) p.vy *= -1;
-      p.x = Math.max(z.left, Math.min(z.right, p.x));
-      p.y = Math.max(z.top, Math.min(z.bottom, p.y));
-    });
+      if (newExposures.has(person)) person.state = "E";
+      if (person.state !== "D") {
+        if (Math.random() < mix * .20) {
+          person.vx = (Math.random() - .5) * speed;
+          person.vy = (Math.random() - .5) * speed;
+        }
+        person.x += person.vx;
+        person.y += person.vy;
+      }
+      if (person.x < z.left || person.x > z.right) person.vx *= -1;
+      if (person.y < z.top || person.y > z.bottom) person.vy *= -1;
+      person.x = Math.max(z.left, Math.min(z.right, person.x));
+      person.y = Math.max(z.top, Math.min(z.bottom, person.y));
+    }
     step += 1;
     record();
     drawPopulation();
@@ -163,14 +189,26 @@
     chartCtx.textAlign = "right";
     chartCtx.fillText("Time (simulation steps) →", w - 18, h - 10);
     chartCtx.textAlign = "left";
-    if (history.length < 2) return;
+    // Draw the first point immediately so the chart is never blank after Reset.
+    if (!history.length) return;
     const maxY = Math.max(10, config.population);
     const xAt = i => pad.l + i / Math.max(1, history.length - 1) * (w - pad.l - pad.r);
     const yAt = val => h - pad.b - val / maxY * (h - pad.t - pad.b);
     ["S", "E", "I", "R", "D"].forEach(state => {
       chartCtx.beginPath(); chartCtx.strokeStyle = colors[state]; chartCtx.lineWidth = 2.5;
-      history.forEach((row, i) => i === 0 ? chartCtx.moveTo(xAt(i), yAt(row[state])) : chartCtx.lineTo(xAt(i), yAt(row[state])));
+      const stride = Math.max(1, Math.ceil(history.length / Math.max(200, w)));
+      for (let i = 0; i < history.length; i += stride) {
+        const row = history[i];
+        if (i === 0) chartCtx.moveTo(xAt(i), yAt(row[state]));
+        else chartCtx.lineTo(xAt(i), yAt(row[state]));
+      }
+      const last = history.length - 1;
+      if (last > 0) chartCtx.lineTo(xAt(last), yAt(history[last][state]));
       chartCtx.stroke();
+      if (history.length === 1) {
+        chartCtx.fillStyle = colors[state];
+        chartCtx.beginPath(); chartCtx.arc(xAt(0), yAt(history[0][state]), 4, 0, Math.PI * 2); chartCtx.fill();
+      }
     });
   }
   function pause() {
@@ -191,9 +229,12 @@
     const blob = new Blob([[header, ...rows].join("\n")], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = "disease-dynamics-data.csv"; a.click();
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
-  ["population", "beta", "vaccination", "deathRate"].forEach(id => $(id).addEventListener("input", updateOutputs));
+  ["population", "beta", "vaccination", "deathRate"].forEach(id => {
+    $(id).addEventListener("input", updateOutputs);
+    $(id).addEventListener("change", reset);
+  });
   $("preset").addEventListener("change", applyPreset);
   $("density").addEventListener("change", reset);
   $("mixing").addEventListener("change", reset);

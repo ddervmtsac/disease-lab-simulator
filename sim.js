@@ -55,6 +55,7 @@
   function record() {
     const c = counts();
     history.push({ time: step, ...c });
+    if (history.length > 2400) history.shift();
     peak = Math.max(peak, c.I);
     $("susceptibleStat").textContent = c.S;
     $("exposedStat").textContent = c.E;
@@ -219,7 +220,9 @@
   $("startBtn").addEventListener("click", () => {
     if (running) return;
     running = true;
-    timer = setInterval(simulateStep, 350);
+    timer = setInterval(() => {
+      try { simulateStep(); } catch (error) { pause(); console.error("Simulation paused after an error:", error); }
+    }, 350);
   });
   $("pauseBtn").addEventListener("click", pause);
   $("resetBtn").addEventListener("click", reset);

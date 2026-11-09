@@ -27,5 +27,5 @@ This is a simplified classroom demonstration, not a validated epidemiological fo
 
 ## Social-distancing controls
 - **Population density:** Low spreads agents across a larger area; high groups them into a smaller area.
-- **Population mixing:** Low, medium, and high adjust movement and contact frequency. Infection is based on proximity to infectious agents.
+- **Population mixing:** Low, medium, and high adjust movement and contact frequency. Infection is based on proximity to contagious agents.
 - This is a simplified classroom model, not a validated epidemiological forecast.

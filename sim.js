@@ -1,7 +1,7 @@
 (() => {
   const $ = (id) => document.getElementById(id);
   const presets = {
-    flu: { beta: 0.28, gamma: 0.10, sigma: 0.20, vaccination: 20 },
+    flu: { beta: 0.28, gamma: 0.10, sigma: 0.20, vaccination: 0 },
     covid: { beta: 0.42, gamma: 0.08, sigma: 0.25, vaccination: 40 },
     measles: { beta: 0.72, gamma: 0.12, sigma: 0.35, vaccination: 90 },
     noro: { beta: 0.52, gamma: 0.22, sigma: 0.45, vaccination: 0 },
@@ -60,10 +60,9 @@
     $("exposedStat").textContent = c.E;
     $("infectiousStat").textContent = c.I;
     $("recoveredStat").textContent = c.R;
-    $("deathsStat").textContent = `${c.D} (${(100 * c.D / Math.max(1, config.population)).toFixed(1)}%)`;
+    $("deathsStat").textContent = `${(100 * c.D / Math.max(1, config.population)).toFixed(1)}% (${c.D} people)`;
     $("peakStat").textContent = peak;
-    const mixingMultiplier = config.mixing === "high" ? 1 : config.mixing === "medium" ? .62 : .28;
-    $("r0Stat").textContent = (config.beta * mixingMultiplier / config.gamma).toFixed(2);
+
     drawChart();
   }
   function zone() {
@@ -187,7 +186,7 @@
   $("pauseBtn").addEventListener("click", pause);
   $("resetBtn").addEventListener("click", reset);
   $("csvBtn").addEventListener("click", () => {
-    const header = "time,susceptible,exposed,infectious,recovered,deaths";
+    const header = "time,susceptible,exposed,contagious,immune,deaths";
     const rows = history.map(r => [r.time, r.S, r.E, r.I, r.R, r.D].join(","));
     const blob = new Blob([[header, ...rows].join("\n")], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);

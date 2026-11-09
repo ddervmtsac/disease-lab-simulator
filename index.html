@@ -23,23 +23,23 @@
           <select id="preset">
             <option value="flu">Seasonal-flu-like</option>
             <option value="covid">COVID-like</option>
-            <option value="measles">Highly transmissible / measles-like</option>
+            <option value="measles">Measles-like</option>
             <option value="noro">Norovirus-like</option>
             <option value="custom">Custom settings</option>
           </select>
         </label>
-        <label>Population <output id="populationOut">180</output>
-          <input id="population" type="range" min="40" max="500" step="10" value="180">
+        <label>Population <output id="populationOut">250</output>
+          <input id="population" type="range" min="40" max="500" step="10" value="250">
         </label>
         <label>Transmission rate (β) <output id="betaOut">0.28</output>
           <input id="beta" type="range" min="0.05" max="0.8" step="0.01" value="0.28">
         </label>
-        <label>Vaccinated at start <output id="vaxOut">20%</output>
-          <input id="vaccination" type="range" min="0" max="100" step="10" value="20">
+        <label>Vaccinated at start <output id="vaxOut">0%</output>
+          <input id="vaccination" type="range" min="0" max="100" step="10" value="0">
         </label>
-        <label>Death rate among infectious people <output id="deathRateOut">2%</output>
+        <label>Death rate among contagious people <output id="deathRateOut">2%</output>
           <input id="deathRate" type="range" min="0" max="20" step="0.02" value="2">
-          <small>Chance that an infectious person dies rather than recovers.</small>
+          <small>Chance that an contagious person dies rather than recovers.</small>
         </label>
         <label>Population density
           <select id="density">
@@ -69,11 +69,10 @@
     <section class="stats" aria-label="Current simulation statistics">
       <article class="stat"><span>Susceptible</span><strong id="susceptibleStat">—</strong></article>
       <article class="stat"><span>Exposed</span><strong id="exposedStat">—</strong></article>
-      <article class="stat"><span>Infectious</span><strong id="infectiousStat">—</strong></article>
-      <article class="stat"><span>Recovered</span><strong id="recoveredStat">—</strong></article>
-      <article class="stat"><span>Deaths (% of population)</span><strong id="deathsStat">—</strong></article>
-      <article class="stat"><span>Peak infectious</span><strong id="peakStat">—</strong></article>
-      <article class="stat"><span>Approx. R₀*</span><strong id="r0Stat">—</strong></article>
+      <article class="stat"><span>Contagious</span><strong id="contagiousStat">—</strong></article>
+      <article class="stat"><span>Immune</span><strong id="immuneStat">—</strong></article>
+      <article class="stat"><span>Death toll (% of population)</span><strong id="deathsStat">—</strong></article>
+      <article class="stat"><span>Max contagious</span><strong id="peakStat">—</strong></article>
     </section>
 
     <section class="visual-grid">
@@ -84,8 +83,8 @@
         <div class="legend">
           <span><i class="dot susceptible"></i> Susceptible</span>
           <span><i class="dot exposed"></i> Exposed</span>
-          <span><i class="dot infectious"></i> Infectious</span>
-          <span><i class="dot recovered"></i> Recovered</span>
+          <span><i class="dot contagious"></i> Contagious</span>
+          <span><i class="dot immune"></i> Immune</span>
           <span><i class="dot deceased"></i> Deceased</span>
         </div>
       </article>
@@ -96,14 +95,14 @@
         <div class="legend">
           <span><i class="line susceptible-line"></i> Susceptible</span>
           <span><i class="line exposed-line"></i> Exposed</span>
-          <span><i class="line infectious-line"></i> Infectious</span>
-          <span><i class="line recovered-line"></i> Recovered</span>
+          <span><i class="line contagious-line"></i> Contagious</span>
+          <span><i class="line immune-line"></i> Immune</span>
           <span><i class="line deceased-line"></i> Deaths</span>
         </div>
       </article>
     </section>
     <footer>
-      <p>*Approximate R₀ is a simplified teaching indicator adjusted for population mixing; it is not a calibrated epidemiological estimate. The model uses proximity-based contacts and assumes lasting immunity; real outbreaks are more complex.</p>
+      <p>The model uses proximity-based contacts and assumes lasting immunity. Results are illustrative, not predictions for real outbreaks.</p>
     </footer>
   </main>
 </body>
